@@ -1,6 +1,6 @@
 import os
 import secrets
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
 
 @dataclass
@@ -14,8 +14,8 @@ class Config:
     DATABASE_URL: str = os.getenv('DATABASE_URL', 'sqlite:///app.db')
     
     # OpenWrt配置
-    OPENWRT_REPOS_DIR: str = os.getenv('OPENWRT_REPOS_DIR', '/app/data/repos')
-    WORKSPACES_DIR: str = os.getenv('WORKSPACES_DIR', '/app/data/workspaces')
+    OPENWRT_REPOS_DIR: str = os.getenv('OPENWRT_REPOS_DIR', './data/repos')
+    WORKSPACES_DIR: str = os.getenv('WORKSPACES_DIR', './data/workspaces')
     OPENWRT_GIT_URL: str = os.getenv('OPENWRT_GIT_URL', 'https://github.com/openwrt/openwrt.git')
     
     # 会话配置
@@ -28,7 +28,7 @@ class Config:
     CLEANUP_INTERVAL: int = int(os.getenv('CLEANUP_INTERVAL', '300'))  # 5分钟
     
     # 安全配置
-    ALLOWED_EXTENSIONS: set = {'config', 'txt'}
+    ALLOWED_EXTENSIONS: set = field(default_factory=lambda: {'config', 'txt'})
     MAX_SEARCH_RESULTS: int = int(os.getenv('MAX_SEARCH_RESULTS', '100'))
     RATE_LIMIT_STORAGE_URL: str = os.getenv('RATE_LIMIT_STORAGE_URL', REDIS_URL)
     
