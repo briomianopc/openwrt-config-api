@@ -40,6 +40,14 @@ services:
       timeout: 5s
       retries: 3
 
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile
+    volumes:
+      - frontend_build:/usr/share/nginx/html
+    restart: unless-stopped
+
   nginx:
     image: nginx:alpine
     ports:
@@ -48,8 +56,10 @@ services:
     volumes:
       - ./docker/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./docker/ssl:/etc/nginx/ssl:ro
+      - frontend_build:/usr/share/nginx/html:ro
     depends_on:
       - api
+      - frontend
     restart: unless-stopped
 
 volumes:
@@ -57,6 +67,7 @@ volumes:
   workspaces_data:
   redis_data:
   logs_data:
+  frontend_build:
 
 networks:
   default:
