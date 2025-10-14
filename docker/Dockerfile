@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y \
     file \
     libssl-dev \
     wget \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 # 创建应用用户

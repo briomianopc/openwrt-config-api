@@ -8,10 +8,11 @@ services:
     environment:
       - FLASK_ENV=production
       - REDIS_URL=redis://redis:6379/0
-      - SECRET_KEY=${SECRET_KEY}
+      - SECRET_KEY=${SECRET_KEY:-default-secret-key-change-in-production}
       - LOG_LEVEL=INFO
       - MAX_SESSIONS_PER_IP=5
       - SESSION_TTL=3600
+      - WORKERS=4
     volumes:
       - repos_data:/app/data/repos
       - workspaces_data:/app/data/workspaces
@@ -25,6 +26,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   redis:
     image: redis:7-alpine
