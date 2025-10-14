@@ -32,6 +32,9 @@ def create_app(config_name=None):
     # 创建必要目录
     setup_directories(app)
     
+    # 注册健康检查端点
+    register_health_check(app)
+    
     return app
 
 def setup_logging(app):
