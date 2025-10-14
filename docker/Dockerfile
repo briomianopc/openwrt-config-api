@@ -15,6 +15,7 @@ RUN apt-get update && apt-get install -y \
     libssl-dev \
     wget \
     curl \
+    redis-server \
     && rm -rf /var/lib/apt/lists/*
 
 # 创建应用用户
@@ -30,9 +31,13 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 复制应用代码
 COPY . .
 
+# 复制启动脚本
+COPY docker/start.sh /app/start.sh
+
 # 创建数据目录
 RUN mkdir -p /app/data/repos /app/data/workspaces /app/logs && \
-    chown -R appuser:appuser /app
+    chown -R appuser:appuser /app && \
+    chmod +x /app/start.sh
 
 # 设置环境变量
 ENV FLASK_ENV=production
@@ -51,4 +56,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:5000/health || exit 1
 
 # 启动命令
-CMD ["gunicorn", "-c", "gunicorn.conf.py", "run:create_app()"]
+CMD ["/app/start.sh"]
