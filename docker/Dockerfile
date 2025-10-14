@@ -20,7 +20,8 @@ RUN apt-get update && apt-get install -y \
 RUN groupadd -r appuser && useradd -r -g appuser appuser
 
 # 复制依赖文件
-COPY requirements.txt requirements-dev.txt ./
+COPY requirements.txt ./
+COPY requirements-dev.txt* ./
 
 # 安装Python依赖
 RUN pip install --no-cache-dir -r requirements.txt
