@@ -193,4 +193,99 @@ def search_symbols(session_id):
     if not validate_session_id(session_id):
         return jsonify({'error': 'Invalid session ID'}), 400
     
+    session_manager = get_session_manager()
+    session_data = session_manager.get_session(session_id)
+    
+    if not session_data:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    try:
+        query = request.args.get('q', '').strip()
+        if not query:
+            return jsonify({'error': 'Search query is required'}), 400
+        
+        if len(query) < 2:
+            return jsonify({'error': 'Search query too short'}), 400
+        
+        if len(query) > 100:
+            return jsonify({'error': 'Search query too long'}), 400
+        
+        max_results = min(
+            int(request.args.get('limit', 50)),
+            current_app.config['MAX_SEARCH_RESULTS']
+        )
+        
+        kconfig_service = KconfigService(Path(session_data.workspace_path))
+        results = kconfig_service.search_symbols(query, max_results)
+        
+        return jsonify({
+            'query': query,
+            'results': results,
+            'count': len(results),
+            'truncated': len(results) >= max_results
+        })
+        
+    except ValueError as e:
+        return jsonify({'error': str(e)}), 400
+    except Exception as e:
+        current_app.logger.error(f"Symbol search failed for {session_id}: {e}")
+        return jsonify({
+            'error': 'Search failed',
+            'details': str(e) if current_app.debug else 'Internal server error'
+        }), 500
+
+@bp.route('/<session_id>/compare', methods=['POST'])
+@rate_limit(max_requests=10, window=3600)
+def compare_configs(session_id):
+    """比较配置"""
+    if not validate_session_id(session_id):
+        return jsonify({'error': 'Invalid session ID'}), 400
+    
+    session_manager = get_session_manager()
+    session_data = session_manager.get_session(session_id)
+    
+    if not session_data:
+        return jsonify({'error': 'Session not found'}), 404
+    
+    try:
+        if 'file' not in request.files:
+            return jsonify({'error': 'No file provided'}), 400
+        
+        file = request.files['file']
+        if not file.filename:
+            return jsonify({'error': 'No file selected'}), 400
+        
+        # 读取文件内容
+        file_content = file.read()
+        
+        # 验证文件大小
+        if len(file_content) > current_app.config['MAX_UPLOAD_SIZE']:
+            return jsonify({'error': 'File too large'}), 413
+        
+        # 验证文件内容
+        try:
+            config_text = file_content.decode('utf-8')
+        except UnicodeDecodeError:
+            return jsonify({'error': 'File must be UTF-8 encoded'}), 400
+        
+        if not validate_config_file(config_text):
+            return jsonify({'error': 'Invalid configuration file format'}), 400
+        
+        # 比较配置
+        kconfig_service = KconfigService(Path(session_data.workspace_path))
+        diff = kconfig_service.compare_configs(config_text)
+        
+        return jsonify({
+            'differences': diff,
+            'count': len(diff),
+            'identical': len(diff) == 0
+        })
+        
+    except Exception as e:
+        current_app.logger.error(f"Config comparison failed for {session_id}: {e}")
+        return jsonify({
+            'error': 'Comparison failed',
+            'details': str(e) if current_app.debug else 'Internal server error'
+        }), 500
+    
     
