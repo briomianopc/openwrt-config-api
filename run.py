@@ -29,6 +29,11 @@ def main():
         print("Production environment detected.")
         print("Please use a WSGI server like Gunicorn to run this application.")
         print("Example: gunicorn -c gunicorn.conf.py 'run:create_app()'")
+        
+        # 如果在容器中，直接启动gunicorn
+        if os.getenv('CONTAINER_MODE'):
+            import subprocess
+            subprocess.run(['gunicorn', '-c', 'gunicorn.conf.py', 'run:create_app()'])
         return 1
     
     return 0

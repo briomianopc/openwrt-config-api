@@ -7,17 +7,21 @@ services:
       - "5000:5000"
     environment:
       - FLASK_ENV=production
-      - REDIS_URL=redis://localhost:6379/0
+      - REDIS_URL=redis://redis:6379/0
       - SECRET_KEY=${SECRET_KEY:-default-secret-key-change-in-production}
       - LOG_LEVEL=INFO
       - MAX_SESSIONS_PER_IP=5
       - SESSION_TTL=3600
       - WORKERS=4
-      - RATE_LIMIT_STORAGE_URL=redis://localhost:6379/1
+      - RATE_LIMIT_STORAGE_URL=redis://redis:6379/1
+      - CONTAINER_MODE=true
     volumes:
       - repos_data:/app/data/repos
       - workspaces_data:/app/data/workspaces
       - logs_data:/app/logs
+    depends_on:
+      redis:
+        condition: service_healthy
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5000/health"]

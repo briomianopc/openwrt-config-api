@@ -30,7 +30,7 @@ class Config:
     # 安全配置
     ALLOWED_EXTENSIONS: set = field(default_factory=lambda: {'config', 'txt'})
     MAX_SEARCH_RESULTS: int = int(os.getenv('MAX_SEARCH_RESULTS', '100'))
-    RATE_LIMIT_STORAGE_URL: str = os.getenv('RATE_LIMIT_STORAGE_URL', REDIS_URL)
+    RATE_LIMIT_STORAGE_URL: str = os.getenv('RATE_LIMIT_STORAGE_URL') or os.getenv('REDIS_URL', 'redis://localhost:6379/0')
     
     # 日志配置
     LOG_LEVEL: str = os.getenv('LOG_LEVEL', 'INFO')

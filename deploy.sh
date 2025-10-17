@@ -58,12 +58,12 @@ create_env_file() {
 # OpenWrt配置生成器环境配置
 SECRET_KEY=$(openssl rand -hex 32)
 FLASK_ENV=production
-REDIS_URL=redis://localhost:6379/0
+REDIS_URL=redis://redis:6379/0
 LOG_LEVEL=INFO
 MAX_SESSIONS_PER_IP=5
 SESSION_TTL=3600
 WORKERS=4
-RATE_LIMIT_STORAGE_URL=redis://localhost:6379/1
+RATE_LIMIT_STORAGE_URL=redis://redis:6379/1
 EOF
         log_success "环境配置文件已创建"
     else
