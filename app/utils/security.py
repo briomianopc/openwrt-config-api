@@ -76,7 +76,8 @@ def rate_limit(max_requests: int = 60, window: int = 60, key_func=None):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if current_app.testing:
+            # 在测试模式下跳过速率限制
+            if getattr(current_app, 'testing', False):
                 return f(*args, **kwargs)
             
             try:

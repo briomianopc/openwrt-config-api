@@ -1,5 +1,6 @@
 import os
 import logging
+from datetime import datetime
 from logging.handlers import RotatingFileHandler
 from flask import Flask, jsonify, request
 from flask_cors import CORS
@@ -16,6 +17,9 @@ def create_app(config_name=None):
     # 加载配置
     config_name = config_name or os.getenv('FLASK_ENV', 'development')
     app.config.from_object(config[config_name])
+    
+    # 设置启动时间
+    app.config['START_TIME'] = datetime.utcnow().isoformat() + 'Z'
     
     # 设置日志
     setup_logging(app)
@@ -70,10 +74,12 @@ def setup_logging(app):
 
 def setup_extensions(app):
     """初始化扩展"""
-    # CORS配置
+    # CORS配置 - 根据环境动态设置
+    allowed_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost').split(',')
+    
     CORS(app, resources={
         r"/api/*": {
-            "origins": ["http://localhost:3000", "https://yourdomain.com"],
+            "origins": allowed_origins,
             "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
             "allow_headers": ["Content-Type", "Authorization"],
             "expose_headers": ["Content-Disposition"]

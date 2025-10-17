@@ -30,15 +30,24 @@ class Config:
     # 安全配置
     ALLOWED_EXTENSIONS: set = field(default_factory=lambda: {'config', 'txt'})
     MAX_SEARCH_RESULTS: int = int(os.getenv('MAX_SEARCH_RESULTS', '100'))
-    RATE_LIMIT_STORAGE_URL: str = os.getenv('RATE_LIMIT_STORAGE_URL', REDIS_URL)
     
     # 日志配置
     LOG_LEVEL: str = os.getenv('LOG_LEVEL', 'INFO')
     LOG_FILE: Optional[str] = os.getenv('LOG_FILE')
     
+    # 速率限制配置
+    @property
+    def RATE_LIMIT_STORAGE_URL(self) -> str:
+        return os.getenv('RATE_LIMIT_STORAGE_URL', self.REDIS_URL)
+    
     # Celery配置
-    CELERY_BROKER_URL: str = os.getenv('CELERY_BROKER_URL', REDIS_URL)
-    CELERY_RESULT_BACKEND: str = os.getenv('CELERY_RESULT_BACKEND', REDIS_URL)
+    @property
+    def CELERY_BROKER_URL(self) -> str:
+        return os.getenv('CELERY_BROKER_URL', self.REDIS_URL)
+    
+    @property
+    def CELERY_RESULT_BACKEND(self) -> str:
+        return os.getenv('CELERY_RESULT_BACKEND', self.REDIS_URL)
 
 class ProductionConfig(Config):
     DEBUG = False

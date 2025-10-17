@@ -36,9 +36,15 @@ export WORKERS=${WORKERS:-4}
 echo "📁 创建必要目录..."
 mkdir -p /app/data/repos /app/data/workspaces /app/logs
 
-# 设置权限
-chown -R appuser:appuser /app/data /app/logs
-
-# 切换到应用用户
-echo "👤 切换到应用用户..."
-exec gosu appuser gunicorn -c gunicorn.conf.py "run:create_app()"
+# 设置权限（如果以root运行）
+if [ "$(id -u)" = "0" ]; then
+    chown -R appuser:appuser /app/data /app/logs 2>/dev/null || true
+    
+    # 切换到应用用户
+    echo "👤 切换到应用用户..."
+    exec gosu appuser gunicorn -c gunicorn.conf.py "run:create_app()"
+else
+    # 已经是非root用户
+    echo "👤 以当前用户运行..."
+    exec gunicorn -c gunicorn.conf.py "run:create_app()"
+fi

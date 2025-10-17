@@ -73,11 +73,13 @@ class RepositoryService:
         
         try:
             # 构建安全的git命令
+            # 对于master版本，尝试master和main分支
+            branch = version
             cmd = [
                 "git", "clone",
                 "--depth", "1",
                 "--single-branch",
-                "--branch", version if version != "master" else "main",
+                "--branch", branch,
                 self.git_url,
                 str(repo_path)
             ]
@@ -96,6 +98,27 @@ class RepositoryService:
             
             current_app.logger.info(f"Successfully cloned '{version}'")
             return repo_path
+        
+        except subprocess.CalledProcessError as e:
+            # 如果是master分支失败，尝试main分支
+            if version == "master" and "Remote branch master not found" in str(e.stderr):
+                current_app.logger.info("Master branch not found, trying main branch")
+                try:
+                    cmd = [
+                        "git", "clone",
+                        "--depth", "1",
+                        "--single-branch",
+                        "--branch", "main",
+                        self.git_url,
+                        str(repo_path)
+                    ]
+                    cmd = sanitize_command_args(cmd)
+                    subprocess.run(cmd, capture_output=True, text=True, timeout=600, check=True)
+                    current_app.logger.info(f"Successfully cloned using main branch")
+                    return repo_path
+                except Exception:
+                    pass
+            raise
             
         except subprocess.TimeoutExpired:
             current_app.logger.error(f"Timeout cloning version '{version}'")
@@ -122,7 +145,17 @@ class RepositoryService:
         clone_lock = self._get_clone_lock(version)
         with clone_lock:
             try:
-                cmd = ["git", "pull", "origin", version if version != "master" else "main"]
+                # 获取当前分支名
+                result = subprocess.run(
+                    ["git", "rev-parse", "--abbrev-ref", "HEAD"],
+                    cwd=repo_path,
+                    capture_output=True,
+                    text=True,
+                    timeout=10
+                )
+                current_branch = result.stdout.strip() if result.returncode == 0 else version
+                
+                cmd = ["git", "pull", "origin", current_branch]
                 cmd = sanitize_command_args(cmd)
                 
                 result = subprocess.run(

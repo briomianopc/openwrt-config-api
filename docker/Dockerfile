@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     wget \
     curl \
     redis-server \
+    gosu \
     && rm -rf /var/lib/apt/lists/*
 
 # 创建应用用户
