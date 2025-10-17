@@ -42,7 +42,7 @@ check_requirements() {
         exit 1
     fi
     
-    if ! command -v docker-compose &> /dev/null; then
+    if ! command -v docker compose &> /dev/null; then
         log_error "Docker Compose未安装，请先安装Docker Compose"
         exit 1
     fi
@@ -77,11 +77,11 @@ build_images() {
     
     # 构建后端镜像
     log_info "构建后端镜像..."
-    docker-compose -f $DOCKER_COMPOSE_FILE build api
+    docker compose -f $DOCKER_COMPOSE_FILE build api
     
     # 构建前端镜像
     log_info "构建前端镜像..."
-    docker-compose -f $DOCKER_COMPOSE_FILE build frontend
+    docker compose -f $DOCKER_COMPOSE_FILE build frontend
     
     log_success "镜像构建完成"
 }
@@ -94,7 +94,7 @@ start_services() {
     mkdir -p data/{repos,workspaces,logs}
     
     # 启动服务
-    docker-compose -f $DOCKER_COMPOSE_FILE up -d
+    docker compose -f $DOCKER_COMPOSE_FILE up -d
     
     # 等待服务启动
     log_info "等待服务启动..."
@@ -112,7 +112,7 @@ start_services() {
 # 停止服务
 stop_services() {
     log_info "停止服务..."
-    docker-compose -f $DOCKER_COMPOSE_FILE down
+    docker compose -f $DOCKER_COMPOSE_FILE down
     log_success "服务已停止"
 }
 
@@ -126,7 +126,7 @@ restart_services() {
 # 查看日志
 show_logs() {
     log_info "显示服务日志..."
-    docker-compose -f $DOCKER_COMPOSE_FILE logs -f
+    docker compose -f $DOCKER_COMPOSE_FILE logs -f
 }
 
 # 检查服务状态
@@ -151,7 +151,7 @@ check_services_health() {
 # 显示服务状态
 show_status() {
     log_info "服务状态:"
-    docker-compose -f $DOCKER_COMPOSE_FILE ps
+    docker compose -f $DOCKER_COMPOSE_FILE ps
     
     echo ""
     log_info "资源使用情况:"
@@ -163,7 +163,7 @@ cleanup() {
     log_info "清理Docker资源..."
     
     # 停止并删除容器
-    docker-compose -f $DOCKER_COMPOSE_FILE down -v
+    docker compose -f $DOCKER_COMPOSE_FILE down -v
     
     # 删除未使用的镜像
     docker image prune -f
