@@ -65,7 +65,6 @@ export SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
 
 # 启动后端服务
 echo "🐍 启动后端服务..."
-cd /workspace
 python3 run.py &
 BACKEND_PID=$!
 
