@@ -35,19 +35,18 @@ class Config:
     LOG_LEVEL: str = os.getenv('LOG_LEVEL', 'INFO')
     LOG_FILE: Optional[str] = os.getenv('LOG_FILE')
     
-    # 速率限制配置
-    @property
-    def RATE_LIMIT_STORAGE_URL(self) -> str:
-        return os.getenv('RATE_LIMIT_STORAGE_URL', self.REDIS_URL)
-    
-    # Celery配置
-    @property
-    def CELERY_BROKER_URL(self) -> str:
-        return os.getenv('CELERY_BROKER_URL', self.REDIS_URL)
-    
-    @property
-    def CELERY_RESULT_BACKEND(self) -> str:
-        return os.getenv('CELERY_RESULT_BACKEND', self.REDIS_URL)
+    def __post_init__(self):
+        """在初始化后设置依赖其他配置的值"""
+        # 速率限制配置 - 如果未设置则使用 REDIS_URL
+        if not hasattr(self, 'RATE_LIMIT_STORAGE_URL'):
+            self.RATE_LIMIT_STORAGE_URL = os.getenv('RATE_LIMIT_STORAGE_URL', self.REDIS_URL)
+        
+        # Celery配置 - 如果未设置则使用 REDIS_URL
+        if not hasattr(self, 'CELERY_BROKER_URL'):
+            self.CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', self.REDIS_URL)
+        
+        if not hasattr(self, 'CELERY_RESULT_BACKEND'):
+            self.CELERY_RESULT_BACKEND = os.getenv('CELERY_RESULT_BACKEND', self.REDIS_URL)
 
 class ProductionConfig(Config):
     DEBUG = False
