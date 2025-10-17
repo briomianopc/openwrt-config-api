@@ -86,11 +86,13 @@ def setup_extensions(app):
         }
     })
     
-    # 速率限制
+    # 速率限制 - 直接使用环境变量或 REDIS_URL
+    rate_limit_storage = os.getenv('RATE_LIMIT_STORAGE_URL', app.config.get('REDIS_URL', 'redis://localhost:6379/1'))
+    
     limiter = Limiter(
         key_func=get_remote_address,
         default_limits=["200 per hour", "50 per minute"],
-        storage_uri=app.config['RATE_LIMIT_STORAGE_URL']
+        storage_uri=rate_limit_storage
     )
     limiter.init_app(app)
     
