@@ -12,7 +12,7 @@ echo -e "${BLUE}║          OpenWrt 配置生成器 - 立即部署脚本       
 echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-cd /workspace/docker || exit 1
+cd ./docker || exit 1
 
 # 步骤 1: 停止现有服务
 echo -e "${YELLOW}[1/5]${NC} 停止现有服务..."
