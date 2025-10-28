@@ -82,11 +82,11 @@ def setup_extensions(app):
     
     # 速率限制
     limiter = Limiter(
-        app,
         key_func=get_remote_address,
         default_limits=["200 per hour", "50 per minute"],
         storage_uri=app.config['RATE_LIMIT_STORAGE_URL']
     )
+    limiter.init_app(app)
     
     # 测试Redis连接
     try:

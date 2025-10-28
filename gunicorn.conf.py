@@ -5,8 +5,9 @@ import multiprocessing
 bind = f"0.0.0.0:{os.getenv('PORT', '5000')}"
 backlog = 2048
 
-# 工作进程
-workers = int(os.getenv('WORKERS', multiprocessing.cpu_count() * 2 + 1))
+# 工作进程 - 限制最大工作进程数避免资源问题
+max_workers = min(multiprocessing.cpu_count() * 2 + 1, 8)  # 最多8个工作进程
+workers = int(os.getenv('WORKERS', max_workers))
 worker_class = "sync"
 worker_connections = 1000
 timeout = 120
