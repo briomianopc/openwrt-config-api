@@ -95,7 +95,18 @@
 
 ## 🚀 快速开始
 
-### 方式一：Docker Compose（推荐）
+### 方式一：一键启动（推荐）
+
+```bash
+# 1. 克隆项目
+git clone https://github.com/briomianopc/openwrt-config-api.git
+cd openwrt-config-api
+
+# 2. 一键启动所有服务
+./quick_start.sh
+```
+
+### 方式二：Docker Compose部署
 
 ```bash
 # 1. 克隆项目
@@ -105,31 +116,31 @@ cd openwrt-config-api
 # 2. 创建环境配置
 cp .env.example .env
 
-# 3. 启动服务
-cd docker
-docker-compose up -d
+# 3. 使用部署脚本启动
+./deploy.sh start
 
 # 4. 访问应用
 open http://localhost
 ```
 
-### 方式二：本地开发
+### 方式三：手动本地开发
 
 #### 后端开发
 
 ```bash
 # 1. 安装Python依赖
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 
 # 2. 启动Redis服务
-redis-server
+redis-server --daemonize yes
 
 # 3. 设置环境变量
 export FLASK_ENV=development
 export REDIS_URL=redis://localhost:6379/0
+export SECRET_KEY=$(python3 -c 'import secrets; print(secrets.token_hex(32))')
 
 # 4. 启动后端服务
-python run.py
+python3 run.py
 ```
 
 #### 前端开发
@@ -141,17 +152,35 @@ cd frontend
 # 2. 安装依赖
 npm install
 
-# 3. 启动开发服务器
-npm start
+# 3. 启动开发服务器（修复了allowedHosts问题）
+DANGEROUSLY_DISABLE_HOST_CHECK=true WDS_SOCKET_HOST=localhost PORT=3000 npm start
 
 # 4. 访问 http://localhost:3000
 ```
 
-### 方式三：一键部署脚本
+### 方式四：Docker管理命令
 
 ```bash
-# 使用提供的部署脚本
-./deploy_local.sh
+# 查看所有可用命令
+./deploy.sh help
+
+# 启动服务
+./deploy.sh start
+
+# 查看日志
+./deploy.sh logs
+
+# 检查状态
+./deploy.sh status
+
+# 停止服务
+./deploy.sh stop
+
+# 重启服务
+./deploy.sh restart
+
+# 清理资源
+./deploy.sh cleanup
 ```
 
 ---
@@ -181,15 +210,35 @@ npm start
 | `SESSION_TTL` | `3600` | 会话超时时间（秒） |
 | `MAX_SESSIONS_PER_IP` | `5` | 每IP最大会话数 |
 | `MAX_UPLOAD_SIZE` | `10485760` | 最大上传文件大小（字节） |
+| `DANGEROUSLY_DISABLE_HOST_CHECK` | `true` | 禁用主机检查（开发环境） |
+| `WDS_SOCKET_HOST` | `localhost` | Webpack Dev Server主机 |
+| `WDS_SOCKET_PORT` | `3000` | Webpack Dev Server端口 |
 
 ### Docker配置
 
-- **端口映射**: 80:80 (HTTP), 443:443 (HTTPS)
+- **端口映射**: 80:80 (HTTP), 443:443 (HTTPS), 5000:5000 (API)
 - **数据卷**: 
   - `repos_data`: OpenWrt仓库数据
   - `workspaces_data`: 工作空间数据
   - `redis_data`: Redis数据
   - `logs_data`: 日志文件
+  - `frontend_build`: 前端构建文件
+
+### 服务架构
+
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│     Nginx       │    │   Frontend      │    │      API        │
+│   (Port 80)     │◄──►│   (React)       │◄──►│   (Flask)       │
+│                 │    │                 │    │   (Port 5000)   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                       │
+                                                       ▼
+                                               ┌─────────────────┐
+                                               │     Redis       │
+                                               │   (Port 6379)   │
+                                               └─────────────────┘
+```
 
 ---
 
@@ -328,6 +377,47 @@ echo $REACT_APP_API_URL
 curl http://localhost:5000/health
 
 # 检查CORS配置
+```
+
+</details>
+
+<details>
+<summary><strong>前端开发服务器allowedHosts错误</strong></summary>
+
+```bash
+# 错误信息: options.allowedHosts[0] should be a non-empty string
+
+# 解决方案1: 使用环境变量
+DANGEROUSLY_DISABLE_HOST_CHECK=true WDS_SOCKET_HOST=localhost npm start
+
+# 解决方案2: 创建.env文件
+echo "DANGEROUSLY_DISABLE_HOST_CHECK=true" > frontend/.env
+echo "WDS_SOCKET_HOST=localhost" >> frontend/.env
+echo "WDS_SOCKET_PORT=3000" >> frontend/.env
+
+# 解决方案3: 使用启动脚本
+./frontend/start-dev.sh
+```
+
+</details>
+
+<details>
+<summary><strong>后端API 405 Method Not Allowed错误</strong></summary>
+
+```bash
+# 错误原因: 使用了错误的HTTP方法访问API端点
+
+# 正确的API使用方法:
+# 创建会话 (POST)
+curl -X POST http://localhost:5000/api/session \
+  -H "Content-Type: application/json" \
+  -d '{"version": "master"}'
+
+# 获取会话信息 (GET)
+curl -X GET http://localhost:5000/api/session/{session_id}
+
+# 健康检查 (GET)
+curl -X GET http://localhost:5000/health
 ```
 
 </details>

@@ -6,11 +6,17 @@ WORKDIR /app
 # 复制package文件
 COPY package*.json ./
 
-# 安装依赖（使用npm install因为可能没有package-lock.json）
+# 安装依赖
 RUN npm install --frozen-lockfile=false
 
 # 复制源代码
 COPY . .
+
+# 设置环境变量修复allowedHosts问题
+ENV DANGEROUSLY_DISABLE_HOST_CHECK=true
+ENV WDS_SOCKET_HOST=localhost
+ENV WDS_SOCKET_PORT=3000
+ENV GENERATE_SOURCEMAP=false
 
 # 构建应用
 RUN npm run build
