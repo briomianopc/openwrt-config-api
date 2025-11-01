@@ -79,9 +79,9 @@ build_images() {
     log_info "构建后端镜像..."
     docker compose -f $DOCKER_COMPOSE_FILE build api
     
-    # 构建前端镜像
-    log_info "构建前端镜像..."
-    docker compose -f $DOCKER_COMPOSE_FILE build frontend
+    # 构建Nginx镜像（包含前端静态资源）
+    log_info "构建Nginx镜像..."
+    docker compose -f $DOCKER_COMPOSE_FILE build nginx
     
     log_success "镜像构建完成"
 }
