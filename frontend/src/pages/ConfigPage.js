@@ -10,11 +10,10 @@ import {
   AlertCircle,
   Info,
   Loader,
-  GitCompare,
   Package
 } from 'lucide-react';
 import { sessionAPI, configAPI } from '../services/api';
-import { handleApiError, downloadFile, debounce } from '../utils/helpers';
+import { handleApiError, downloadFile } from '../utils/helpers';
 import toast from 'react-hot-toast';
 import ConfigTree from '../components/ConfigTree';
 import FeedManager from '../components/FeedManager';
@@ -35,13 +34,7 @@ const ConfigPage = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
-  // 加载会话和配置树
-  useEffect(() => {
-    loadSession();
-    loadConfigTree();
-  }, [sessionId]);
-
-  const loadSession = async () => {
+  const loadSession = useCallback(async () => {
     try {
       const response = await sessionAPI.getSession(sessionId);
       setSession(response.data);
@@ -50,9 +43,9 @@ const ConfigPage = () => {
       setError(errorInfo.message);
       toast.error('加载会话失败: ' + errorInfo.message);
     }
-  };
+  }, [sessionId]);
 
-  const loadConfigTree = async () => {
+  const loadConfigTree = useCallback(async () => {
     try {
       setLoading(true);
       const response = await sessionAPI.getConfigTree(sessionId);
@@ -65,43 +58,62 @@ const ConfigPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [sessionId]);
+
+  // 加载会话和配置树
+  useEffect(() => {
+    loadSession();
+    loadConfigTree();
+  }, [loadSession, loadConfigTree]);
 
   // 搜索功能
-  const handleSearch = useCallback(
-    debounce(async (query) => {
-      if (!query.trim()) {
-        setSearchResults([]);
-        return;
-      }
+  const handleSearchChange = (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+  };
 
-      if (query.length < 2) {
-        toast.error('搜索关键词至少需要 2 个字符');
-        return;
-      }
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults([]);
+      setIsSearching(false);
+      return;
+    }
 
-      setIsSearching(true);
+    if (searchQuery.length < 2) {
+      setIsSearching(false);
+      toast.error('搜索关键词至少需要 2 个字符');
+      return;
+    }
+
+    setIsSearching(true);
+    let cancelled = false;
+    const timer = setTimeout(async () => {
       try {
-        const response = await configAPI.searchSymbols(sessionId, query);
+        const response = await configAPI.searchSymbols(sessionId, searchQuery);
+        if (cancelled) {
+          return;
+        }
         setSearchResults(response.data.results);
         if (response.data.truncated) {
           toast.info('搜索结果已截断，请使用更具体的关键词');
         }
       } catch (error) {
-        const errorInfo = handleApiError(error);
-        toast.error('搜索失败: ' + errorInfo.message);
+        if (!cancelled) {
+          const errorInfo = handleApiError(error);
+          toast.error('搜索失败: ' + errorInfo.message);
+        }
       } finally {
-        setIsSearching(false);
+        if (!cancelled) {
+          setIsSearching(false);
+        }
       }
-    }, 300),
-    [sessionId]
-  );
+    }, 300);
 
-  const handleSearchChange = (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    handleSearch(query);
-  };
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [searchQuery, sessionId]);
 
   // 更新配置值
   const handleSymbolUpdate = async (symbolName, newValue) => {

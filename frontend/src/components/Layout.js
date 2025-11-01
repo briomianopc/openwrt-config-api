@@ -1,11 +1,8 @@
 import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Settings, Github, ExternalLink } from 'lucide-react';
 
 const Layout = ({ children }) => {
-  const location = useLocation();
-  const isHomePage = location.pathname === '/';
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* 导航栏 */}
